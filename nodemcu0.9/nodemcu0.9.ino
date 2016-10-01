@@ -208,6 +208,7 @@ void loop()
     }
   }
   
+  bool redirectRequired = false;
   if (portCommandFound)
   {
     int portNumber = portNumberAsString.toInt();
@@ -217,25 +218,39 @@ void loop()
     Serial.println(newState);
 
     applyState(portNumber, newState);
+	redirectRequired = true;
   }
   else
   {
     if (0 < request.indexOf("/DISABLE"))
     {
       disableAll();
+	  redirectRequired = true;
     }
     else if (0 < request.indexOf("/RESTORE"))
     {
       restoreAll();
+	  redirectRequired = true;
     }
   }
 
-  // Return the response
-  String html = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<!DOCTYPE HTML><html><head><meta http-equiv=\"refresh\" content=\"5\"/><style>button{-webkit-border-radius: 14;-moz-border-radius: 14;border-radius: 14px;font-family: Arial;color: #ffffff;font-size: 20px;background: #c957c1;padding: 10px 20px 10px 20px;text-decoration: none;width: 160px;}button:hover{background: #893cfc;text-decoration: none;}</style></head><body>";
+  static const char* HTMLHeaderCommon = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<!DOCTYPE HTML><html><head><meta HTTP-EQUIV=\"REFRESH\" content=\"";
+  String html = HTMLHeaderCommon;
+
+  if (redirectRequired)
+  {
+	  html += "0;url=/";
+  }
+  else
+  {
+	  html += "5";
+  }
+
+  html += "\"><style>button{-webkit-border-radius: 14;-moz-border-radius: 14;border-radius: 14px;font-family: Arial;color: #ffffff;font-size: 20px;background: #c957c1;padding: 10px 20px 10px 20px;text-decoration: none;width: 160px;}button:hover{background: #893cfc;text-decoration: none;}</style></head><body>";
   portsToWeb(html);
   disableRestoreToWeb(html);
   
-  html += "</body></html>\r\n";
+  html += "</body></html>";
   client.println(html);
   client.flush();
  
